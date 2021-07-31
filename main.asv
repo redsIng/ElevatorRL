@@ -18,13 +18,13 @@ close all
 yStart = 0;
 % Constant of increments
 
-K=1;
+K=2.5;
 % Action List
 
-action = K*[-1:0.1:1];
+action = K*[-1 0 1];
 % Lower and UpperBound to y position
 
-lby = -2;
+lby = 0;
 uby = 8;
 % Lower and UpperBound to velocity
 
@@ -41,7 +41,7 @@ N = 1;
 numEpisodes = 1e3;
 % RBF params
 
-epsilon = 2e-1;
+epsilon = 1e-1;
 alpha = 1e-3;
 gamma = 1;
 sigma = 0.01;
@@ -60,7 +60,7 @@ d = length(action)*N*nCells;
 env = ElevatorConcrete;
 
 %Plotting Enviroment
-env.plot;
+% env.plot;
 
 % History of all episodes
 
@@ -76,29 +76,30 @@ for ii = 1:numEpisodes
         
         steps = steps + 1;
         x = getRBF(s, a, sigma, gridx, gridv, M, N, action);
-        [sp, r, isTerminal] = env.step(s,action(a),1);
+        [sp, r, isTerminal] = env.step(s,action(a),0);
         if isTerminal
             w = w + alpha*(r - w'*x)*x;
         else
-            ap = epsgreedy(sp.', w, epsilon, gridx, gridv, M, N, action);
+            ap = epsgreedy(sp, w, epsilon, gridx, gridv, M, N, action);
             xp = getRBF(s, a, sigma, gridx, gridv, M, N, action);
             w = w + alpha*(r + gamma*w'*xp - w'*x)*x;
         end
-        s = sp.';
+        s = sp;
         a = ap;
         
-        env.PlotValue = 1;
         if ii ==numEpisodes
-                env.PlotValue = 1;
-                env.State = [s(1);s(2)];
+            pxx = linspace(lbx, ubx);
+                [sp,rwd,isTerminal] = env.step(s,action(a),1);
                 env.plot
                 pause(0.1)
         end
+        
     end
     
     disp([ii, steps])
 end
 
+save ElevatorEpisode LastEpisode
 %%
 % while env.R
 % % [rwd,isdone,loggedSignals]=env.step(3);
@@ -109,15 +110,15 @@ end
 % env.V0y
 % pause()
 % end
-% clc
-% close all
-% 
-% load ElevatorEpisode
-% % Init Elevatr Enviroment
-% env = ElevatorConcrete;
-% 
-% %Plotting Enviroment
-% env.plot;
+clc
+close all
+
+load ElevatorEpisode
+% Init Elevatr Enviroment
+env = ElevatorConcrete;
+
+%Plotting Enviroment
+env.plot;
 %% SIMULATING LAST EPISODE
 
 

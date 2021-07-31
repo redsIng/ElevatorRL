@@ -6,13 +6,12 @@ classdef Elevator < rl.env.MATLABEnvironment
         % GAIN
         Gain = 1.0
         % time step
-        Ts = 0.1
+        Ts = 1
         %Gravity
         G = 9.8
         % Final Point, will terminate if absolute position is exceeded
         FinalPoint = 5
-        % Force to be applied
-        act = 0;
+        
         % Acceleration
         A = 9.8;
         % Goal threshold, will terminate if norm of state is less than
@@ -21,7 +20,7 @@ classdef Elevator < rl.env.MATLABEnvironment
         %Velocity along y-axis
         V0y = 0
         % Lower Bound y-axis
-        lby = -2
+        lby = 0
         % Upper Bound y-axis
         uby = 8
         % Lower Bound vy
@@ -197,9 +196,8 @@ classdef Elevator < rl.env.MATLABEnvironment
         function [nextobs,rwd,isTerminal] = step(this,s,action,plotValue)
             this.PlotValue = plotValue;
             %Action: we have to conside the presence of force of gravity
-            
-            action =this.act+ getForce(this,action)
-            this.act = action;
+            action = getForce(this,action);
+            action = 
             % Time Step
             %             t = this.Ts;
             % Updating Enviroment State
@@ -207,7 +205,6 @@ classdef Elevator < rl.env.MATLABEnvironment
             xk1 = this.Ad*x+this.Bd*action;
             % Saturating position and velocity
             xk1(1) = min(max(xk1(1),this.lby),this.uby);
-            
             xk1(2) = min(max(xk1(2),this.lbv),this.ubv);
             % Output Linearized System y(t)= [pos;vel] = C*x
             nextobs = this.Cd*xk1;
@@ -258,15 +255,8 @@ classdef Elevator < rl.env.MATLABEnvironment
             %             The second point is critical for training as it prevents the
             %             replay buffer being saturated with 0s for training
             isdone = nextobs == this.FinalPoint ;%|| norm(sp) < this.GoalThreshold ;
-            if nextobs == this.lby
-                this.act = 0;
-                xk1(2) = 0;
-                nextobs(2) = 0;
-                rwd = -100;
-            else
-%                 rwd = - x'*this.Qd*x - action'*this.Rd*action - 2*x'*this.Nd*action;
-                rwd = -1;
-            end
+            rwd = - x'*this.Qd*x - action'*this.Rd*action - 2*x'*this.Nd*action;
+            
             if isdone == 1
                 isTerminal = true;
             else
