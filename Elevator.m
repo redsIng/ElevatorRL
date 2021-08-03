@@ -6,7 +6,7 @@ classdef Elevator < rl.env.MATLABEnvironment
         % GAIN
         Gain = 1.0
         % time step
-        Ts = 0.1
+        Ts = 1
         %Gravity
         G = 9.8
         % Final Point, will terminate if absolute position is exceeded
@@ -25,9 +25,9 @@ classdef Elevator < rl.env.MATLABEnvironment
         % Upper Bound y-axis
         uby = 8
         % Lower Bound vy
-        lbv = -2
+        lbv = -3
         % Upper Bound vy
-        ubv = 8
+        ubv = 3
         %Enabling Plotting Env Observer
         PlotValue=0
         % Reward Weights (in continuous time to remove dependence on sample
@@ -196,78 +196,43 @@ classdef Elevator < rl.env.MATLABEnvironment
         
         function [nextobs,rwd,isTerminal] = step(this,s,action,plotValue)
             this.PlotValue = plotValue;
+            % State x = [position,velocity]
+            
             %Action: we have to conside the presence of force of gravity
             
-            action =this.act+ getForce(this,action)
-            this.act = action;
+            action =getForce(this,action);
+            this.act =this.act+ action;
             % Time Step
             %             t = this.Ts;
             % Updating Enviroment State
+            %x = [vel;acc]
             x = s.';
-            xk1 = this.Ad*x+this.Bd*action;
+            
+            xk1 = this.Ad*x+this.Bd*this.act;
             % Saturating position and velocity
             xk1(1) = min(max(xk1(1),this.lby),this.uby);
             
             xk1(2) = min(max(xk1(2),this.lbv),this.ubv);
-            % Output Linearized System y(t)= [pos;vel] = C*x
-            nextobs = this.Cd*xk1;
-            this.State = xk1;
-            
-            %             this.State = s;
-            %Get next state
-            % We have to describe the elevator dynamics along x-axis and
-            % y-axis.
-            % x-axis: for each time step x(t) = x0
-            % y-axis: for each time step y(t) = y0+v0y*t+1/2*ay*(t)^2
-            %             yt = this.State(1);
-            %             v0t = this.State(2);
-            %             at = this.A+action;
-            %             atp = at - this.G;
-            %             ytp = yt+v0t*t+0.5*atp*(t)^2;
-            %             if ytp < this.lby || ytp >= this.uby
-            %                 this.resetEnv()
-            %                 this.A = 9.8;
-            %                 rwd = -1;
-            %                 ytp = min(max(ytp,this.lby),this.uby);
-            %                 sp = [ytp;0];
-            %                 this.State = sp;
-            %                 isTerminal = false;
-            %                 return
-            %             end
-            %
-            %             ytp = min(max(ytp,this.lby),this.uby);
-            %             this.V0y = min(max(v0t+atp*t,this.lbv),this.ubv);
-            %
-            %             sp = [ytp;this.V0y];
-            % %             if norm(sp) < this.GoalThreshold
-            % % %                 this.resetEnv()
-            % % %                 this.A = 9.8;
-            % %                 rwd = -1;
-            % %                 sp = [0;0];
-            % %                 this.State = sp;
-            % %                 isTerminal = false;
-            % %                 return
-            % %             end
-            %             this.State = sp;
-            %
-            %             this.A = at;
+            % Output Linearized System y(t)= [vel;pos] = C*x
+            nextobs = (this.Cd*xk1).';
+            this.State = xk1.';
             %             The episode will terminate under the following conditions:
             %             1. the mass moves more than X units away from the origin
             %             2. the norm of the state is less than some threshold
             %
             %             The second point is critical for training as it prevents the
             %             replay buffer being saturated with 0s for training
-            isdone = nextobs == this.FinalPoint ;%|| norm(sp) < this.GoalThreshold ;
-            if nextobs == this.lby
-                this.act = 0;
-                xk1(2) = 0;
+            isdone = nextobs(1) == this.FinalPoint && nextobs(2) == 0 && this.act == 0;%|| norm(sp) < this.GoalThreshold ;           
+            %rwd = - x'*this.Qd*x - action'*this.Rd*action - 2*x'*this.Nd*action;
+            rwd = -1;
+            if nextobs(1) == this.lby || nextobs(1) == this.uby
                 nextobs(2) = 0;
-                rwd = -100;
-            else
-%                 rwd = - x'*this.Qd*x - action'*this.Rd*action - 2*x'*this.Nd*action;
-                rwd = -1;
+                this.act = 0;
+                this.State = nextobs;
+                rwd = rwd -1e2;
             end
             if isdone == 1
+                this.act = 0;
                 isTerminal = true;
             else
                 isTerminal = false;

@@ -6,7 +6,7 @@
 % considered to have a unitary mass, while the states are all the possible positions
 % that the lift can assume in space. Given the high cardinality of the states and
 % the continuous nature of the problem, we have chosen to solve this problem with the
-% application of the SARSA_RBF typical of the functional approximation.
+% application of the SARSA_ET typical of the functional approximation.
 clc
 clear
 close all
@@ -21,30 +21,30 @@ yStart = 0;
 K=1;
 % Action List
 
-action = K*[-1:0.1:1];
+action = K*[-1,0,1];
 % Lower and UpperBound to y position
 
 lby = -2;
 uby = 8;
 % Lower and UpperBound to velocity
 
-lbv = -2;
-ubv = 8;
+lbv = -3;
+ubv = 3;
 % Grid Dimension
 
-M =10;
+M =20;
 % Number of grid
 
-N = 1;
+N = 4;
 % Number of episodes
 
-numEpisodes = 1e3;
+numEpisodes = 1e5;
 % RBF params
 
-epsilon = 2e-1;
-alpha = 1e-3;
+epsilon = 1e-2;
+alpha =1.e-2;
 gamma = 1;
-sigma = 0.01;
+lambda = 0.7;
 % Number of RBF Cells
 
 nCells = (M+1)^2;
@@ -60,64 +60,53 @@ d = length(action)*N*nCells;
 env = ElevatorConcrete;
 
 %Plotting Enviroment
-env.plot;
+%  env.plot;
 
 % History of all episodes
-
+episode=[];
 %% TRAINING PHASE - IMPLEMENTING SARSA RBF ALGORITHM
 w = zeros(d,1);
 
 for ii = 1:numEpisodes
-    s = env.State;
+    z = zeros(d,1);
+    s = [0,0];
     a = epsgreedy(s, w, epsilon, gridx, gridv, M, N, action);
-    isTerminal = 0;
+    isTerminal = false;
     steps = 0;
+    if ii == numEpisodes
+        episode(end+1,:) = [s,a,0,0];
+    end
     while ~isTerminal
         
         steps = steps + 1;
-        x = getRBF(s, a, sigma, gridx, gridv, M, N, action);
-        [sp, r, isTerminal] = env.step(s,action(a),1);
+        x = getFeatures(s,a,gridx,gridv,M,N,length(action));
+        [sp, r, isTerminal] = env.step(s,action(a),0);
         if isTerminal
-            w = w + alpha*(r - w'*x)*x;
+            delta = r-w'*x;
+            this.act = 0;
         else
-            ap = epsgreedy(sp.', w, epsilon, gridx, gridv, M, N, action);
-            xp = getRBF(s, a, sigma, gridx, gridv, M, N, action);
-            w = w + alpha*(r + gamma*w'*xp - w'*x)*x;
+            ap = epsgreedy(sp, w, epsilon, gridx, gridv, M, N, action);
+            xp = getFeatures(sp,ap,gridx,gridv,M,N,length(action));
+            delta = r+gamma*w'*xp-w'*x;
         end
-        s = sp.';
+        z = gamma*lambda*z+x;
+        w = w+alpha*delta*z;
+        s = sp;
         a = ap;
         
         env.PlotValue = 1;
-        if ii ==numEpisodes
-                env.PlotValue = 1;
-                env.State = [s(1);s(2)];
-                env.plot
+        if ii == numEpisodes
+                episode(end+1,:) = [s,a,r,env.act];
                 pause(0.1)
+                env.PlotValue = 1;
+                env.State = [s(1),s(2)];
+                env.plot
+                
         end
     end
     
     disp([ii, steps])
 end
-
-%%
-% while env.R
-% % [rwd,isdone,loggedSignals]=env.step(3);
-% a ~= action(randi(size(action,2)))
-% [rwd,isdone,loggedSignals]=env.step(a);
-% env.plot;
-% env.A
-% env.V0y
-% pause()
-% end
-% clc
-% close all
-% 
-% load ElevatorEpisode
-% % Init Elevatr Enviroment
-% env = ElevatorConcrete;
-% 
-% %Plotting Enviroment
-% env.plot;
-%% SIMULATING LAST EPISODE
+save ElevatorData episode
 
 

@@ -26,7 +26,7 @@ classdef ElevatorConcrete < Elevator
             ActionInfo = rlNumericSpec([1 1]);
             ActionInfo.Name = 'force';
             this = this@Elevator(ActionInfo);
-      
+            
         end
         function obs = reset(this)
             % reset the double integrator to +/- 0.8*MaxDistance
@@ -38,6 +38,44 @@ classdef ElevatorConcrete < Elevator
             Xd0 = 0;
             this.State = [X0;Xd0];
             obs = this.State;
+        end
+        
+        function plotState(obj,listStates,listStateOptimal)
+            figure(1);
+            hold on
+            box on
+            axis([0 4 -2 8])
+            axis equal
+            plot(0.1,0,'ro')
+            text(-0.5,0,'x_i','FontSize',14)
+            plot(0.1,5,'ro')
+            text(-0.5,5,'x_f','FontSize',14)
+            for i = 1:length(listStates)
+                if i>1
+                    delete(h1);
+                    delete(h2);
+                end
+                h1 = patch([0,0.2,0.2,0],[listStates(i)-0.1,listStates(i)-0.1,...
+                    listStates(i)+0.1,listStates(i)+0.1],'g');
+                h2 = plot(0.1,listStates(i),'k+');
+                pause(0.1)
+            end
+            axis([0 4 -2 8])
+            axis equal
+            plot(0.1,0,'ro')
+            text(-0.5,0,'x_i','FontSize',14)
+            plot(0.1,5,'ro')
+            text(-0.5,5,'x_f','FontSize',14)
+            for i = 1:length(listStateOptimal)
+                if i>1
+                    delete(h3);
+                    delete(h4);
+                end
+                h3 = patch([0,0.2,0.2,0],[listStateOptimal(i)-0.1,listStateOptimal(i)-0.1,...
+                    listStateOptimal(i)+0.1,listStateOptimal(i)+0.1],'r');
+                h4 = plot(0.1,listStateOptimal(i),'k+');
+                pause(0.1)
+            end
         end
     end
 end

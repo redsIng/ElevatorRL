@@ -55,7 +55,7 @@ classdef ElevatorVisualizer < rl.env.viz.AbstractFigureVisualizer
             ha.YLim = [-2.5 md+fix(md/2)+1];
             ha.XLim = [-0.1 0.5*md-0.1];
             
-            x = env.State(2);
+            x = env.State(1);
             w = 1;
             h = 1;
             
@@ -70,6 +70,8 @@ classdef ElevatorVisualizer < rl.env.viz.AbstractFigureVisualizer
             % Draw Target distance
             xLen = linspace(0, 3);
             line(ha, xLen, md*ones(length(xLen)),'Color','g',...
+                'LineStyle','-.', 'LineWidth', 1);
+            line(ha, xLen, 0*ones(length(xLen)),'Color','b',...
                 'LineStyle','-.', 'LineWidth', 1);
             drawnow();
         end

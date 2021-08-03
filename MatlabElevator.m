@@ -159,7 +159,7 @@ classdef Elevator < rl.env.MATLABEnvironment
             this.Ts = val;
             updatePerformanceWeights(this);
         end
-        function [nextobs,rwd,isdone,loggedSignals] = step(this,action)
+        function [xk1,rwd,isdone,loggedSignals] = step(this,action)
                        
             loggedSignals = [];
             
@@ -169,7 +169,7 @@ classdef Elevator < rl.env.MATLABEnvironment
             % get next state
             x = this.State;
             xk1 = this.Ad*x + this.Bd*action;
-            nextobs = this.Cd*xk1;
+%             nextobs = this.Cd*xk1;
             this.State = xk1;
             
             % calculate reward
