@@ -28,25 +28,24 @@ lby = -2;
 uby = 8;
 % Lower and UpperBound to velocity
 
-lbv = -3;
-ubv = 3;
+lbv = -6;
+ubv = 6;
 % Grid Dimension
 
 M =20;
 % Number of grid
 
-N = 4;
+N = 5;
 % Number of episodes
 
 numEpisodes = 1e5;
-% RBF params
 
 epsilon = 1e-2;
 alpha =1.e-2;
 gamma = 1;
 lambda = 0.7;
-% Number of RBF Cells
 
+% Number of Cells
 nCells = (M+1)^2;
 d = length(action)*N*nCells;
 % Costruction of tiles
@@ -60,11 +59,11 @@ d = length(action)*N*nCells;
 env = ElevatorConcrete;
 
 %Plotting Enviroment
-%  env.plot;
+%env.plot;
 
 % History of all episodes
 episode=[];
-%% TRAINING PHASE - IMPLEMENTING SARSA RBF ALGORITHM
+%% TRAINING PHASE - IMPLEMENTING SARSA ET ALGORITHM
 w = zeros(d,1);
 
 for ii = 1:numEpisodes
@@ -100,11 +99,9 @@ for ii = 1:numEpisodes
                 pause(0.1)
                 env.PlotValue = 1;
                 env.State = [s(1),s(2)];
-                env.plot
-                
+                env.plot        
         end
     end
-    
     disp([ii, steps])
 end
 save ElevatorData episode

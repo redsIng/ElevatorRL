@@ -3,31 +3,22 @@ classdef Elevator < rl.env.MATLABEnvironment
     % control
     
     properties
-        % GAIN
+        % Gain
         Gain = 1.0
         % time step
         Ts = 1
-        %Gravity
-        G = 9.8
         % Final Point, will terminate if absolute position is exceeded
         FinalPoint = 5
         % Force to be applied
         act = 0;
-        % Acceleration
-        A = 9.8;
-        % Goal threshold, will terminate if norm of state is less than
-        % threshold
-        GoalThreshold = 5e-2
-        %Velocity along y-axis
-        V0y = 0
         % Lower Bound y-axis
         lby = -2
         % Upper Bound y-axis
         uby = 8
         % Lower Bound vy
-        lbv = -3
+        lbv = -6
         % Upper Bound vy
-        ubv = 3
+        ubv = 6
         %Enabling Plotting Env Observer
         PlotValue=0
         % Reward Weights (in continuous time to remove dependence on sample
@@ -104,7 +95,6 @@ classdef Elevator < rl.env.MATLABEnvironment
             nd = QQ(1:Nx,Nx+1:n);
             ad = phi22(1:Nx,1:Nx);
             bd = phi22(1:Nx,Nx+1:n);
-            
             this.Rd = rd;
             this.Qd = qd;
             
@@ -121,8 +111,6 @@ classdef Elevator < rl.env.MATLABEnvironment
             ObservationInfo.Name = 'states';
             ObservationInfo.Description = 's, ds';
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
-            %             this.lby = -2;
-            %             this.uby = this.FinalPoint + fix(this.FinalPoint/2)+1;
             updatePerformanceWeights(this);
             
         end
@@ -133,10 +121,7 @@ classdef Elevator < rl.env.MATLABEnvironment
                 notifyEnvUpdated(this);
             end
         end
-        function set.GoalThreshold(this,val)
-            validateattributes(val,{'numeric'},{'finite','real','positive','scalar'},'','GoalThreshold');
-            this.GoalThreshold = val;
-        end
+
         function set.FinalPoint(this,d)
             validateattributes(d,{'numeric'},{'finite','real','positive','scalar'},'','FinalPoint');
             this.FinalPoint = d;
@@ -164,10 +149,7 @@ classdef Elevator < rl.env.MATLABEnvironment
             validateattributes(val,{'numeric'},{'real','finite','size',[1 1]},'','PlotValue');
             this.PlotValue = val;
         end
-        function set.A(this,val)
-            validateattributes(val,{'numeric'},{'real','finite','size',[1 1]},'','V0y');
-            this.A = val;
-        end
+
         function set.Q(this,val)
             validateattributes(val,{'numeric'},{'real','finite','size',[2 2]},'','Q');
             this.Q = val;
@@ -189,23 +171,12 @@ classdef Elevator < rl.env.MATLABEnvironment
             updatePerformanceWeights(this);
         end
         
-        function resetEnv(this)
-            %             this.State = [0,0];
-            this.V0y = 0;
-        end
-        
+
         function [nextobs,rwd,isTerminal] = step(this,s,action,plotValue)
             this.PlotValue = plotValue;
-            % State x = [position,velocity]
-            
-            %Action: we have to conside the presence of force of gravity
-            
             action =getForce(this,action);
-            this.act =this.act+ action;
-            % Time Step
-            %             t = this.Ts;
+            this.act = this.act+ action;
             % Updating Enviroment State
-            %x = [vel;acc]
             x = s.';
             
             xk1 = this.Ad*x+this.Bd*this.act;
@@ -218,18 +189,15 @@ classdef Elevator < rl.env.MATLABEnvironment
             this.State = xk1.';
             %             The episode will terminate under the following conditions:
             %             1. the mass moves more than X units away from the origin
-            %             2. the norm of the state is less than some threshold
-            %
-            %             The second point is critical for training as it prevents the
-            %             replay buffer being saturated with 0s for training
-            isdone = nextobs(1) == this.FinalPoint && nextobs(2) == 0 && this.act == 0;%|| norm(sp) < this.GoalThreshold ;           
-            %rwd = - x'*this.Qd*x - action'*this.Rd*action - 2*x'*this.Nd*action;
-            rwd = -1;
+
+            isdone = nextobs(1) == this.FinalPoint && nextobs(2) == 0 && this.act == 0;           
+            rwd = - x'*this.Qd*x - action'*this.Rd*action - 2*x'*this.Nd*action;
+            %rwd = -1;
             if nextobs(1) == this.lby || nextobs(1) == this.uby
                 nextobs(2) = 0;
                 this.act = 0;
                 this.State = nextobs;
-                rwd = rwd -1e2;
+                rwd = -1e2;
             end
             if isdone == 1
                 this.act = 0;

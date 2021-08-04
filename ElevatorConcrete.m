@@ -39,7 +39,7 @@ classdef ElevatorConcrete < Elevator
             this.State = [X0;Xd0];
             obs = this.State;
         end
-        
+        % Function to plot the elevator
         function plotState(obj,listStates,listStateOptimal)
             figure(1);
             hold on

@@ -23,8 +23,6 @@ a = episode(1,3);
 
 listStates = [];
 for i = 1: size(episode,1)-2
-    episode(i,1)
-    episode(i+1,1)
     expand = linspace(episode(i,1),episode(i+1,1),5).';
     listStates = vertcat(listStates,expand);
     
