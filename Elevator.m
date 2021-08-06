@@ -191,8 +191,8 @@ classdef Elevator < rl.env.MATLABEnvironment
             %             1. the mass moves more than X units away from the origin
 
             isdone = nextobs(1) == this.FinalPoint && nextobs(2) == 0 && this.act == 0;           
-            rwd = - x'*this.Qd*x - action'*this.Rd*action - 2*x'*this.Nd*action;
-            %rwd = -1;
+            %rwd = - x'*this.Qd*x - action'*this.Rd*action - 2*x'*this.Nd*action;
+            rwd = -1;
             if nextobs(1) == this.lby || nextobs(1) == this.uby
                 nextobs(2) = 0;
                 this.act = 0;
